@@ -15,9 +15,11 @@ class UserManager extends Module {
             socket.on(this.MESSAGES.CHANGE_PASSWORD, ({ login, oldHash, newHash }) => this.changePassword({ login, oldHash, newHash }, socket));
             socket.on(this.MESSAGES.LOGOUT_ALL_USERS, ({ secretWord }) => this.logoutAllUsers(secretWord, socket));
 
+
             socket.on('disconnect', () => {
+                // удаляем юзера, если он отключился, но не сделал логаут
                 for (let id in this.users) {
-                    if (id === socket.id) {
+                    if (this.users[id].socketId === socket.id) {
                         delete this.users[id];
                         break;
                     }
@@ -62,15 +64,16 @@ class UserManager extends Module {
     }
 
     async login(data, socket) {
-        const user = new User({ db: this.db });
+        const user = new User({ db: this.db, socketId: socket.id });
         if (data.login in this.bannedUsers) {
-            return socket.emit(this.MESSAGES.LOGIN, { result: false, text: 'Временная блокировка' });
+            socket.emit(this.MESSAGES.LOGIN, {result: false, text: 'Временная блокировка'})
+            return false;
         }
         if (await user.auth(data)) {
-            if (!this.users[socket.id]) {
-                this.users[socket.id] = user;
-                console.log(`${user.name} авторизовался`);
-                return socket.emit(this.MESSAGES.LOGIN, { result: true, token: user.self().token });
+            if (!this.users[user.id]) {
+                this.users[user.id] = user;
+                socket.emit(this.MESSAGES.LOGIN, { result: true, token: user.self().token });
+                return true;
             }
         } else {
             if (data.login in this.authAttemptsAmount) {
@@ -83,24 +86,31 @@ class UserManager extends Module {
                 this.timeoutBan(data.login);
             }       
         }
-        return socket.emit(this.MESSAGES.LOGIN, { result: false });
+        socket.emit(this.MESSAGES.LOGIN, { result: false });
+        return false;
     }
     
     async registration(data, socket) {
         const user = new User({ db: this.db, socketId: socket.id });
         if (await user.registration(data)) {
             this.users[user.id] = user;
-            return socket.emit(this.MESSAGES.REGISTRATION, user.self().token);
+            socket.emit(this.MESSAGES.REGISTRATION, user.self().token);
+            return true;;
         }
         return false;
     }
 
     async logout(token, socket) {
-        if (this.users[socket.id]) {
-            delete this.users[socket.id];
-            return socket.emit(this.MESSAGES.LOGOUT, true);
+        const userData = await this.db.getUserByToken(token);
+        const user = this.users[userData.id];
+        if (user) {
+            if (await user.logout()) {
+                delete this.users[user.id];
+                socket.emit(this.MESSAGES.LOGOUT, true);
+                return;
+            }
         }
-        return socket.emit(this.MESSAGES.LOGOUT, false);
+        socket.emit(this.MESSAGES.LOGOUT, false);
     }
 
     async logoutAllUsers(secretWord, socket) {

@@ -12,13 +12,13 @@ const SETTINGS = {
 
     // все события, котореы есть в сокетах
     MESSAGES: {
-        GET_MESSAGE: 'GET_MESSAGE',
-        SEND_MESSAGE: 'SEND_MESSAGE',
+        GET_MESSAGE: 'GET_MESSAGE', // получить все сообщения
+        SEND_MESSAGE: 'SEND_MESSAGE', // послать сообщение
         LOGIN: 'LOGIN',
         REGISTRATION: 'REGISTRATION',
         LOGOUT: 'LOGOUT',
-        USER_ONLINE: 'USER_ONLINE',
-        USER_OFFLINE: 'USER_OFFLINE',
+        USER_ONLINE: 'USER_ONLINE', // пользователь успешно авторизовался и стал онлайн
+        USER_OFFLINE: 'USER_OFFLINE', // пользователь успешно разлогинился и стал оффлайн
         CREATE_ROOM: 'CREATE_ROOM',
         JOIN_GAME: 'JOIN_GAME',
         LEAVE_GAME: 'LEAVE_GAME',
@@ -27,29 +27,34 @@ const SETTINGS = {
         USER_LEAVE_CHAT: 'USER_LEAVE_CHAT',
         MOVE: 'MOVE',
         STOP_MOVE: 'STOP_MOVE',
-        CHANGE_DIRECTION: 'CHANGE_DIRECTION',
         GET_SCENE: 'GET_SCENE',
         GET_NAMES: 'GET_NAMES',
         SPEED_UP: 'SPEED_UP',
         SPEED_DOWN: 'SPEED_DOWN',
         SPEED_CHANGE: 'SPEED_CHANGE',
         CHANGE_PASSWORD: 'CHANGE_PASSWORD',
-        LOGOUT_ALL_USERS: 'LOGOUT_ALL_USERS'
+        LOGOUT_ALL_USERS: 'LOGOUT_ALL_USERS',
+        CHANGE_CAMERA_ROTATION: 'CHANGE_CAMERA_ROTATION',
+        CHANGE_POSITION: 'CHANGE_POSITION',
+        INFO_ABOUT_THE_GAMERS: 'INFO_ABOUT_THE_GAMERS'
     },
 
     MEDIATOR: {
         EVENTS: {
             TEST_EVENT: 'TEST_EVENT',
-            USER_LOGIN: 'USER_LOGIN',
-            USER_LOGOUT: 'USER_LOGOUT',
+            USER_LOGIN: 'USER_LOGIN', // пользователь авторизовался
+            USER_LOGOUT: 'USER_LOGOUT', // пользователь разлогинился
             USER_REGISTRATION: 'USER_REGISTRATION',
             USER_ENTER_ROOM: 'USER_ENTER_ROOM',
-            USER_LEAVE_ROOM: 'USER_LEAVE_ROOM'
+            USER_LEAVE_ROOM: 'USER_LEAVE_ROOM',
+            SEND_GAMERS_INFO: 'SEND_GAMERS_INFO'
+            //...
         },
         TRIGGERS: {
             TEST_TRIGGER: 'TEST_TRIGGER',
             GET_ALL_USERS: 'GET_ALL_USERS',
-            GET_ALL_ROOMS: 'GET_ALL_ROOMS'
+            GET_ALL_ROOMS: 'GET_ALL_ROOMS',
+            //...
         }
     }
 };

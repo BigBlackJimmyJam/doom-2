@@ -1,3 +1,4 @@
+const { prototype } = require('jasmine');
 const Module = require('../Module');
 const Game = require('./game/Game'); // конструктор арены
 
@@ -7,67 +8,48 @@ class GameManager extends Module {
 
         this.games = [
             new Game({ 
-                callbacks: { updateCb: (gameData) => {} },
+                mediator: this.mediator,
+                events: this.EVENTS,
                 db: this.db,
                 name: 'firstGame'
             }),
             new Game({ 
-                callbacks: { updateCb: (gameData) => {} },
+                mediator: this.mediator,
+                events: this.EVENTS,
                 db: this.db,
                 name: 'secondGame'
             }),
             new Game({ 
-                callbacks: { updateCb: (gameData) => {} },
+                mediator: this.mediator,
+                events: this.EVENTS,
                 db: this.db,
                 name: 'thirdGame'
-            })
+            }),
+            //new Game({ callbacks: { updateCb: (gameData) => {}} })
         ];
 
         this.io.on('connection', socket => {
             socket.on(this.MESSAGES.MOVE, (data) => this.moveGamer(data));
             socket.on(this.MESSAGES.STOP_MOVE, () => this.stopMove(socket));
-            socket.on(this.MESSAGES.CHANGE_DIRECTION, (data) => this.changeDireciton(data));
             socket.on(this.MESSAGES.GET_GAMES, () => this.getGames(socket));
             socket.on(this.MESSAGES.JOIN_GAME, (data) => this.joinGame(data, socket));
             socket.on(this.MESSAGES.LEAVE_GAME, (data) => this.leaveGame(data, socket));
             socket.on(this.MESSAGES.SPEED_UP, () => this.speedUp(socket));
             socket.on(this.MESSAGES.SPEED_DOWN, () => this.speedDown(socket));
-            socket.on(this.MESSAGES.CHANGE_CAMERA_ROTATION, (data) => this.changeCameraRotation(data));
-            socket.on(this.MESSAGES.CHANGE_POSITION, (data) => this.changePosition(data));
+            socket.on(this.MESSAGES.CHANGE_CAMERA_ROTATION, (data) => this.changeRotationGamer(data));
 
             socket.on('disconnect', () => {
                
             });
         });
+
+        this.mediator.subscribe(this.EVENTS.SEND_GAMERS_INFO, data => this.updateCb(data));
     }
 
-
-    changeCameraRotation(data) {
-        const { rotationParams, gameName, token } = data;
-        const game = this.games.find((game) => game.name === gameName);
-        if(game) {
-            game.changeCameraRotationGamer(rotationParams, token);
-            for(let gamer in game) {
-                if(gamer) {
-                    
-                }
-            }
-        }
+    updateCb( { name, gamers } ) {
+        this.io.to(name).emit(this.MESSAGES.INFO_ABOUT_THE_GAMERS, gamers );
     }
-
-    changePosition(data) {
-        const { position, gameName, token } = data;
-        const game = this.games.find((game) => game.name === gameName);
-        if(game) {
-            game.changePositionGamer(position, token);
-            for(let gamer in game) {
-                if(gamer) {
-                    
-                }
-            }
-        }
-    }
-
+ 
     speedUp(socket) {
         socket.emit(this.MESSAGES.SPEED_CHANGE, {result: 'up'});
     }
@@ -84,12 +66,14 @@ class GameManager extends Module {
 
     joinGame(data, socket) {
         const { gameName, token } = data;
-        const game = this.games.find((game) => game.name === gameName);
-        if (game) {
-            game.joinGame(token);
-            const games = this.games.map((game) => game.getData());
+        const scene = this.games.find((game) => game.name === gameName).joinGame(token);
+        if (scene) {
+            
+            socket.join(gameName);
+
+            const games = this.games.map((elem) => elem.getData());
             this.io.emit(this.MESSAGES.GET_GAMES, games);
-            return socket.emit(this.MESSAGES.JOIN_GAME, { result: true, gameName, scene: game.getScene() });
+            return socket.emit(this.MESSAGES.JOIN_GAME, { result: true, gameName });
         }
         return socket.emit(this.MESSAGES.JOIN_GAME, { result: false });
     }
@@ -99,6 +83,9 @@ class GameManager extends Module {
         if (game) {
             const result = game.leaveGame(token);
             if (result) {
+
+                socket.leave(gameName);
+
                 const games = this.games.map((elem) => elem.getData());
                 this.io.emit(this.MESSAGES.GET_GAMES, games);
                 return socket.emit(this.MESSAGES.LEAVE_GAME, { result });
@@ -108,20 +95,21 @@ class GameManager extends Module {
     }
 
     moveGamer({ gameName, direction, token }) {
-        if (gameName && direction && token) {
-            const game = this.games.find((game) => game.name === gameName);
-            if (game) {
-                game.moveGamer(direction, token);
-            }
+        const game = this.games.find((game) => game.name === gameName);
+        if (game) {
+            game.moveGamer(direction, token);
+        }
+    }
+
+    changeRotationGamer({ rotationParams, gameName, token }) {
+        const game = this.games.find((game) => game.name === gameName);
+        if(game) {
+            game.changeRotationGamer(rotationParams, token);
         }
     }
 
     stopMove(socketId) {
 
-    }
-
-    changeDireciton({ x, y }) {
-        
     }
 
     getScene() {
